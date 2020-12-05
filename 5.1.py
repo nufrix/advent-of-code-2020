@@ -1,3 +1,6 @@
+import math
+import sys
+
 data = """
 BBFFFFBRLL
 BFBBBBFLLL
@@ -800,7 +803,7 @@ FFBBBBFRLL""".strip().split('\n')
 
 ROWS_MIN = 0
 ROWS_MAX = 127
-COLUMNS_MIN = ROWS_MIN
+COLUMNS_MIN = 0
 COLUMNS_MAX = 7
 
 LOWER_HALF_ROWS = 'F'
@@ -810,30 +813,50 @@ UPPER_HALF_COLUMNS = 'R'
 
 
 def get_seat_coordinates(seat_coordinates, minimum, maximum):
-    print(minimum, maximum)
-    coordinates = (minimum, maximum)
+    coordinates = None
     for index, character in enumerate(seat_coordinates):
         if character in (LOWER_HALF_ROWS, LOWER_HALF_COLUMNS):
-            old_maximum = maximum
-            maximum = (maximum - minimum) // 2
-            minimum = old_maximum
-            coordinates = get_seat_coordinates(seat_coordinates[index + 1:], minimum, maximum)
+            maximum = minimum + math.floor((maximum - minimum) // 2)
         elif character in (UPPER_HALF_ROWS, UPPER_HALF_COLUMNS):
-            old_minimum = minimum
-            minimum = (maximum - minimum) // 2
-            maximum = old_minimum
-            coordinates = get_seat_coordinates(seat_coordinates[index + 1:], minimum, maximum)
-    return coordinates
+            minimum += math.ceil((maximum - minimum) / 2)
+        coordinates = (minimum, maximum)
+    return min(coordinates) if seat_coordinates[-1] in (LOWER_HALF_ROWS, LOWER_HALF_ROWS) else max(coordinates)
+
+
+def generate_seat_id(row, column):
+    return row * 8 + column
+
+
+def process_item(item):
+    rows, columns = item[:7], item[7:]
+    row = get_seat_coordinates(rows, ROWS_MIN, ROWS_MAX)
+    column = get_seat_coordinates(columns, COLUMNS_MIN, COLUMNS_MAX)
+    return row, column
+
+
+def test():
+    test_data = {'BFFFBBFRRR': {'row': 70, 'column': 7, 'seat_id': 567},
+                 'FFFBBBFRRR': {'row': 14, 'column': 7, 'seat_id': 119},
+                 'BBFFBBFRLL': {'row': 102, 'column': 4, 'seat_id': 820}}
+
+    for key, value in test_data.items():
+        row, column = process_item(key)
+        seat_id = generate_seat_id(row, column)
+        try:
+            assert row == value['row']
+            assert column == value['column']
+            assert seat_id == value['seat_id']
+        except AssertionError:
+            print(key, value, row, column, seat_id)
 
 
 if __name__ == '__main__':
-    for item in data[:5]:
-        rows, columns = item[:7], item[7:]
-        print(rows, columns)
-        # Row
-        minimum, maximum = get_seat_coordinates(item, ROWS_MIN, ROWS_MAX)
-        print(minimum, maximum)
-        # Column
-        minimum, maximum = get_seat_coordinates(item, COLUMNS_MIN, COLUMNS_MAX)
-        print(minimum, maximum)
-        pass
+
+    if 'test' in sys.argv:
+        test()
+    else:
+        seat_ids = []
+        for item in data:
+            row, column = process_item(item)
+            seat_ids.append(generate_seat_id(row, column))
+        print(max(seat_ids))
