@@ -850,6 +850,15 @@ def test():
             print(key, value, row, column, seat_id)
 
 
+def find_my_seat(seat_ids):
+    seat_ids = sorted(seat_ids)
+    previous_seat_id = -1
+    for seat_id in seat_ids:
+        if seat_id - previous_seat_id == 2:
+            return seat_id - 1
+        previous_seat_id = seat_id
+
+
 if __name__ == '__main__':
 
     if 'test' in sys.argv:
@@ -860,3 +869,4 @@ if __name__ == '__main__':
             row, column = process_item(item)
             seat_ids.append(generate_seat_id(row, column))
         print(max(seat_ids))
+        print(find_my_seat(seat_ids))
